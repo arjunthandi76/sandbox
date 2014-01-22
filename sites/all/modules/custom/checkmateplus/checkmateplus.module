@@ -1,0 +1,614 @@
+<?php
+
+
+
+
+
+/* 
+ * the menu hook - adds the path for this module including the 
+ * ajax autocomplete paths. 
+ * 
+ */
+
+function checkmateplus_menu(){
+ $items['checkmateplus'] = array(
+  	'type' => MENU_CALLBACK,
+  	'title' => 'My Autocomplete Form',
+	'access callback' => TRUE,
+ 	'page callback' => 'checkmateplus_my_page',
+	'access arguments' => array('access content'), 
+ );
+
+ $items['insource/node_by_author'] = array(
+    'title' => 'Autocomplete (node limited by author)',
+	'access callback' => TRUE,
+ 	'page callback' => 'drupal_get_form',
+    'page arguments' => array('ajax_edit_instance_form_by_user_autocomplete'),
+	'weight' => 12,
+ );
+ $items['insource/node_by_author_autocomplete'] = array(
+    	'page callback' => 'ajax_edit_instance_form_by_user_node_autocomplete_callback',
+		'access callback' => TRUE,
+    	'type' => MENU_CALLBACK,
+    	'access arguments' => array('access content'),
+
+ );
+ 
+
+  $items['insource'] = array(
+    'title' => 'Checklist',
+    'page callback' => 'checkmateplus_main_page',
+    'access callback' => 'user_is_logged_in',
+    'type' => MENU_CALLBACK,
+    'file' => 'includes/checkmateplus.pages.inc',
+  );
+
+
+  
+ return $items;
+}
+
+
+
+
+function theme_checkmateplus_admin_checklists_form ($vars) {
+	
+    //drupal_add_tabledrag('cl-lists', 'order', 'sibling', 'cl-order', NULL, NULL,FALSE);
+
+  //return drupal_render_children($form);
+}
+
+
+
+
+         
+function checkmateplus_admin_checklists_form_submit(&$form, &$form_state) {
+
+	//ob_start();
+	//var_dump($form_state);break;
+	foreach ($form['#checklists'] as $cl) {
+	
+
+		$update = array(
+				 
+				'clid' => $cl->clid,
+				'weight' => $form_state['values']['cl_' . $cl->clid],
+				'cl_plid' => $form_state['input']['cl_plid_' . $cl->clid],
+		);
+		drupal_write_record('checklist_lists', $update, 'clid');
+	}
+
+	drupal_set_message(t('Checklists order updated successfully.'));
+
+}
+
+/**
+ *
+ * Form Alter code.
+ *
+ * @param $form
+ * @param $form_state
+ * @return array
+ */ 
+function checkmateplus_form_alter(&$form, &$form_state, $form_id){
+	/*
+	 * Include CSSs and Jss that are required for all forms.
+	* 		
+	*/
+	
+//	drupal_add_css(drupal_get_path('module', 'checkmateplus') . '/css/is-module.css', array('group' => CSS_DEFAULT, 'type' => 'file'));
+	//drupal_set_message("CM+ | Form ID is : " . $form_id);
+	
+	/*
+	 * checklist_admin_checklists_form:
+	* 		Enable user to select a Project type
+	*/
+	if($form_id == "checkmate_item_form"){
+	//	echo "shamone";
+   // dpm($form);
+		//$form['#theme'] = 'checkmateplus_admin_checklists_form';
+		//$form['#submit'][] = 'checkmateplus_admin_checklists_form_submit';  // Run our submit function after the code submit functions
+	}
+	
+/*
+	$form['#submit'][] = 'checkmateplus_edit_instance_form_submit';  // Run our submit function after the code submit functions
+	}
+	if($form_id == "project_node_form"){
+		$form['#submit'][] = 'checkmateplus_node_project_form_submit';  // Run our submit function after the code submit functions
+	
+	}
+*/
+}
+
+
+/**
+ * Return nodes that have been  by a particular user.
+ * That means that we'll have to make an autocomplete function which takes a username as an argument, and
+ * use #ajax to change the #autocomplete_path based on the selected user.
+ *
+ * The idea here is:
+ * 1. Autcomplete to get a valid username.
+ * 2. Use #ajax to update the node element with a #autocomplete_callback that gives the context for the username.
+ * 3. Do an autcomplete on the node field that is limited by the username.
+ *
+ * @param $form
+ * @param $form_state
+ * @return array
+ */
+function cm_ajax_edit_instance_form_by_user_autocomplete($form, &$form_state,$username,$projecttitle) {
+
+
+  $form['usergroups_api']['usergroups_api_group_user'] = array(
+    '#weight' => '0',
+    '#states' => '',
+    '#type' => 'textfield',
+    '#title' => t('Who shall we assign this checklist to?'),
+    // Since we just need simple user lookup, we can use the simplest function of them all, user_autocomplete().
+    '#autocomplete_path' => 'user/autocomplete',
+    '#ajax' => array(
+      'callback' => 'ajax_edit_instance_form_user_callback',
+      'wrapper' => 'autocomplete-by-node-ajax-replace',
+    ),
+  );
+	if ($username!=""){
+		$form['usergroups_api']['usergroups_api_group_user']['#value']=$username;
+	}
+
+
+  // This form element with autocomplete will be replaced by #ajax whenever the author changes, allowing the search
+  // to be limited by user.
+  $form['usergroups_api']['node'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Select the project to link this checklist instance.'),
+    '#prefix' => '<div id="autocomplete-by-node-ajax-replace">',
+    '#suffix' => '</div>',
+    '#disabled' => TRUE,
+  );
+	if ($projecttitle !=""){
+		$form['usergroups_api']['node']['#value']=$projecttitle ;
+		$form['usergroups_api']['node']['#disabled']=FALSE ;
+	}
+
+  // When the author changes in the author field, we'll change the autocomplete_path to match.
+  if (!empty($form_state['values']['usergroups_api_group_user'])) {
+    $author = user_load_by_name($form_state['values']['usergroups_api_group_user']);
+    if (!empty($author)) {
+	//echo 'PATH:insource/node_by_author_autocomplete/' . $author->uid . '/' . $form['#cl']->project_category_id . "<P>";
+      $autocomplete_path = 'insource/node_by_author_autocomplete/' . $author->uid . '/' . $form['#cl']->project_category_id;
+      $form['usergroups_api']['node']['#autocomplete_path'] = $autocomplete_path;
+      $form['usergroups_api']['node']['#title'] = t('Select a project by %author to assign this checklist.', array('%author' => $author->name));
+      $form['usergroups_api']['node']['#disabled'] = FALSE;
+      $form['usergroups_api']['node']['#required'] = FALSE;
+      $form['usergroups_api']['node']['#weight'] =0;
+    }
+  }
+
+  $form['actions'] = array(
+    '#type' => 'actions'
+  );
+
+  $form['actions']['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Submit'),
+  );
+
+  return $form;
+}
+
+
+
+/**
+ *
+ * AJAX callback for author form element.
+ *
+ * @param $form
+ * @param $form_state
+ * @return array
+ */
+function cm_ajax_edit_instance_form_user_callback($form, $form_state) {
+//echo "ITS here"; break;					//['usergroups_api_group_user']
+//drupal_set_message('<pre>_user_callback:' . print_r($form['usergroups_api']['node'], TRUE) . '------</pre>');
+	$form['usergroups_api']['node']['#value']="" ;
+  return $form['usergroups_api']['node'];
+}
+
+
+
+
+/**
+ * Validate handler to convert our string like "Some node title [3325]" into a nid.
+ *
+ * In case the user did not actually use the autocomplete or have a valid string there, we'll try to look
+ * up a result anyway giving it our best guess.
+ *
+ * Since the user chose a unique node, we must now use the same one in our submit handler, which means we need to look
+ * in the string for the nid.
+ *
+ *
+ * @param $form
+ * @param $form_state
+ */
+function cm_ajax_edit_instance_form_by_user_autocomplete_validate ($form, &$form_state) {
+
+
+  $title = $form_state['values']['node'];
+  $author = $form_state['values']['usergroups_api_group_user'];
+  $matches = array();
+  $nid = 0;
+
+//print_r($account);break;
+//echo "ACC:".$account."<P>";
+  $account = user_load_by_name($author); // We must have a valid user.
+  if (empty($account)) {
+
+    form_error($form['usergroups_api']['usergroups_api_group_user'], t('You must choose a valid author username'));
+    return;
+  }
+
+  // This preg_match() looks for the last pattern like [33334] and if found extracts the numeric portion.
+  $result = preg_match('/\[([0-9]+)\]$/', $title, $matches);
+  if ($result > 0) {
+    // If $result is nonzero, we found a match and can use it as the index into $matches.
+    $nid = $matches[$result];
+    // Verify that it's a valid nid.
+    $node = node_load($nid);
+    if (empty($node)) {
+      form_error($form['node'], t('Sorry, no node with nid %nid can be found', array('%nid' => $nid)));
+      return;
+    }
+  }
+
+  // BUT: Not everybody will have javascript turned on, or they might hit ESC and not use the autocomplete values
+  // offered. In that case, we can attempt to come up with a useful value. This is not absolutely necessary,
+  // and we *could* just emit a form_error() as below. Here we'll find the *first* matching title and assume
+  // that is adequate.
+  else {
+    $nid = db_select('node')
+      ->fields('node', array('nid'))
+      ->condition('uid', $account->uid)
+      ->condition('title', db_like($title) . '%', 'LIKE')
+      ->range(0, 1)
+      ->execute()
+      ->fetchField();
+  }
+
+  // Now, if we somehow found a nid, assign it to the node. If we failed, emit an error.
+  if (!empty($nid)) {
+
+    $form_state['values']['node'] = $nid;
+		//print_r("NID:".$nid);break;
+  }
+  else {
+    form_error($form['node'], t('Sorry, no node starting with %title can be found', array('%title' => $title)));
+  }
+}
+
+
+
+/**
+ * Autocomplete callback for nodes by title but limited by author.
+ *
+ * Searches for a node by title given the passed-in author username.
+ *
+ * The returned $matches array has
+ * * key: The title, with the identifying nid in brackets, like "Some node title [3325]"
+ * * value: the title which will is displayed in the autocomplete pulldown.
+ *
+ * @param $author_uid
+ *   The author username to limit the search.
+ * @param $string
+ *   The string that will be searched.
+ */
+
+
+function cm_ajax_edit_instance_form_by_user_node_autocomplete_callback($string = "") {
+
+  $matches = array();
+$author_uid=arg(2);
+$proj_type_tid=arg(3);
+ if ($author_uid > 0 && trim($string)) {
+	$query = db_select('node', 'n');
+	$query->join('field_data_field_proj_type', 'b', 'n.nid = b.entity_id');
+	$query
+	  	->fields('n', array('nid', 'title'))
+      		->condition('n.uid', $author_uid)
+	  	->condition('n.status', '1')
+      	  	->condition('n.type', 'project')
+      		->condition('b.field_proj_type_tid', $proj_type_tid)
+	  	->orderBy('n.created', 'DESC');
+	$result = $query->execute();
+
+	//drupal_set_message("result : " .$proj_type_tid );
+    foreach ($result as $node) {
+	//drupal_set_message("node: " . print_r($node));
+      	$matches[$node->title . " [$node->nid]"] = check_plain($node->title);
+    }
+	//drupal_set_message("matches: " . print_r($matches));
+ }
+//$project_category_id)
+  drupal_json_output($matches);
+}
+
+
+
+
+function cm_getinbetween ($haystack, $start_limiter, $end_limiter) {
+
+	$start_limiter = '[';  $end_limiter = ']';
+	$start_pos = strpos($haystack,$start_limiter);
+	$end_pos = strpos($haystack,$end_limiter,$start_pos);
+	return substr($haystack, $start_pos+1, ($end_pos-1)-$start_pos);
+}
+
+
+
+
+/**
+ * Submit handler for node lookup unique autocomplete example.
+ *
+ * Here the nid has already been placed in $form_state['values']['node'] by the validation handler.
+ *
+ * @param $form
+ * @param $form_state
+ */
+function cm_ajax_edit_instance_form_by_user_autocomplete_submit($form, &$form_state) {
+  	$node = node_load($form_state['values']['node']);
+  	$account = user_load($node->uid);
+  	drupal_set_message(t('You found node %nid with title !title_link, authored by !user_link',
+    	array('%nid' => $node->nid, '!title_link' => l($node->title, 'node/' . $node->nid), '!user_link' => theme('username', array('account' => $account)))));
+}
+ 
+
+
+
+function checkmateplus_edit_instance_form_submit($form, &$form_state) {
+
+
+	$result = db_query("SELECT instance_id FROM checklist_instances ORDER BY instance_id DESC LIMIT 1");
+	$record = $result->fetchAssoc();
+	$last_id = $record['instance_id'];
+	$project_id = getinbetween ($form_state['values']['node'], "[", "]");
+
+
+db_update('checklist_groups')
+      	->condition('instance_id', $last_id)
+ 	->fields(array('project_id' => $project_id))
+    	->execute();
+
+  
+
+}
+
+
+
+
+
+
+
+
+
+function checkmateplus_node_project_form_submit ($form, &$form_state) {
+
+
+	// Get current user id
+	global $user;
+	$uid=$user->uid;
+
+	// Get Project id from the new node
+	$result = db_query("SELECT nid FROM node WHERE type ='project' ORDER BY nid DESC LIMIT 1");
+	$record = $result->fetchAssoc();
+	$project_id = $record['nid']+1;
+
+	// Get Category ID for help with validation and to help decide which Checklists we are going to initialise
+	//$result = db_query("SELECT field_proj_venture_target_id FROM  field_data_field_proj_venture WHERE entity_id ='".$project_id."' LIMIT 1");
+	//echo "PD:".$project_id."<P>";
+	//$record = $result->fetchAssoc();
+	//$project_cat_id = $record['field_proj_venture_target_id'];
+	$project_cat_id = 0;
+
+	// In the near future we can retrieve this from an array in a config file that can be filtered by project category
+	// We could have an array like (Proj_catid, clid,recurring? )
+	$clid=1;
+	SetupInstance ($project_id, $clid, $uid, $project_cat_id);
+	$clid=2;
+	SetupInstance ($project_id, $clid, $uid, $project_cat_id);
+
+}
+
+function checkmateplus_edit_form_submit (&$form, &$form_state) { 
+
+}
+
+
+
+
+/**
+ *
+ * When submitting a Checklist item form then we also now want to save the corresponding tutorial via tutorial_id.
+ * In addition we also use the title and description from the tutorial to over write the title and description for this checklist item
+ *
+ * @param $form
+ * @param $form_state
+ * @return array
+ */
+function checkmateplus_edit_item_form_submit(&$form, &$form_state) {
+
+
+	$tut_id = $form_state['input']['general']['tutorial_id'];
+	$tut_id = getinbetween ($tut_id, "[", "]");
+
+
+ 	$start_limiter = '[';  $end_limiter = ']';
+	$haystack = $form_state['values']['general']['tutorial_id'];
+	$start_pos = strpos($haystack,$start_limiter);
+	$end_pos = strpos($haystack,$end_limiter,$start_pos);
+	$tut_id = substr($haystack, $start_pos+1, ($end_pos-1)-$start_pos);
+	$form['#cl_item']->tutorial_id= $tut_id;
+
+
+
+		$query = db_select('node', 'n'); 
+		$query->join('field_data_body', 'b', 'n.nid = b.entity_id');
+		$query->condition('n.type', 'how_to', '=')
+		->condition('nid', $tut_id, "=")
+     		->fields('n', array('nid', 'title'))
+     		->fields('b', array('body_value'))
+      		->range(0, 1);
+		$result = $query->execute();
+
+		foreach ($result as $row) {
+			//$row->title = check_plain($row->title)." [".$row->nid ."]";
+       		$tutTitle = check_plain($row->title);
+       		$tutDescription = check_plain($row->body_value);
+		}
+
+		//$tutval= $matches[$row->title];
+
+
+	$form_state['values']['general']['tutorial_id'] =$tut_id;
+	$form_state['values']['general']['title'] =$tutTitle;
+	$form_state['values']['general']['description']['value'] = $tutDescription ;
+//echo "tutTitle:".$tutTitle."<P>";//break;
+}
+
+
+
+
+
+
+
+
+ 
+
+
+/*
+ * Get all tutorials
+ * We probably need to change the name of this at some point!
+ */
+function checkmateplus_my_page() {
+		//echo '<pre>'; print_r($form); echo '</pre>';
+	$matches=array();
+	 //echo '11<pre>'; print_r($form); echo '</pre>'; 
+	$proj_type_tid=arg(3);
+	//echo "ARG33y:".arg(1)."--<P>";
+	$query = db_select('node', 'n');
+	//$query->join('field_tut_taxonomy_typ', 'b', 'n.nid = b.entity_id');
+	$query->join('field_data_field_tut_taxonomy_typ', 'b', 'n.nid = b.entity_id');
+	$query
+	  ->fields('n', array('nid', 'title'))
+	  ->condition('n.type', 'how_to', '=')
+      	  ->condition('b.field_tut_taxonomy_typ_tid', arg(1))
+	  ->condition('n.status', '1')
+	  ->orderBy('n.created', 'DESC')
+	  ->addTag('node_access');
+	$result = $query->execute();
+
+	
+	
+	foreach ($result as $row) {
+		//$matches[$row->title] = check_plain($row->title);
+		$row->title = check_plain($row->title)." [".$row->nid ."]";
+	       $matches[$row->title] = check_plain($row->title)." [".$row->nid ."]";
+		//$matches[$row->nid] = check_plain($row->title)." [".$row->nid ."]";
+	}
+	 drupal_json_output($matches);
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/**
+ * Internal function to build a list of a user's checklist
+ */
+function _checkmateplus_get_user_lists($account, $project_id = 0, $skip_completed_lists = TRUE) {
+  global $user;
+  if ($account->uid == $user->uid) {
+    $_SESSION['checklist_required'] = array();
+  }
+  // This is a prerequisite, but anyone upgrading may not have it enabled.
+  if (!module_exists('usergroups_api')) return array();
+//echo "project_id:--".$project_id."--<P>";
+  $lists = array();
+  $query = 'SELECT cll.*, clin.*, clc.completed '
+    .'FROM {checklist_groups} clg '
+    .'INNER JOIN {checklist_instances} clin ON clg.instance_id = clin.instance_id '
+    .'INNER JOIN {checklist_lists} cll ON cll.clid = clin.clid '
+    .'LEFT JOIN {checklist_complete} clc ON clc.instance_id=clin.instance_id AND (clc.uid = :uid OR clin.group_complete = 1) '
+    .'WHERE cll.first_uid < :uid ';
+	if ($project_id!="") {
+		$query .= 'AND clg.project_id = ' . $project_id . ' ';
+	}
+    $query .= 'AND clg.project_id = ' . $project_id . ' '
+    .'AND ((cll.status = :status AND clin.status = :status) '
+    . ($skip_completed_lists ? ' AND clc.completed IS NULL ' : ' OR clc.completed IS NOT NULL ')
+    .') AND clg.group_id IN (:group_ids)'
+    .' ORDER BY clc.completed, cll.weight, cll.title';
+//echo "project_id:".$project_id."<P>";
+  $args = array(':uid' => $account->uid, ':status' => CHECKLIST_ENABLED, ':group_ids' => array_keys(usergroups_api_get_all_user_group_options($account)));
+  $rs_lists = db_query($query, $args);
+  foreach ($rs_lists as $list) {
+    // Since a user may have multiple groups that qualify, only process an instance once.
+    if (isset($lists[$list->instance_id])) {
+      continue;
+    }
+    $list->items = array();
+    $rs_items = db_query(
+      'SELECT cli.*, cluc.checked_on, cluc.checked_by '
+      .'FROM {checklist_items} cli '
+      .'LEFT JOIN {checklist_user_checks} cluc ON cli.cliid = cluc.cliid AND cluc.instance_id = :instance_id AND (cluc.uid = :uid'
+        . ($list->group_complete ? ' OR 1' : '') .') '
+      .'WHERE cli.clid = :clid AND (cli.status = :status OR cluc.checked_on IS NOT NULL) '
+      .'ORDER BY cli.weight, cli.title',
+      array(':instance_id' => $list->instance_id, ':uid' => $account->uid, ':clid' => $list->clid, ':status' => CHECKLIST_ENABLED));
+    foreach ($rs_items as $item) {
+//print_r ( $item);echo "<P><P>";
+      $item->data = unserialize($item->data);
+      $item->tutorial = array("testywesty","FEFG");
+
+//print_r ( $item->data);echo "<P><P>";
+      $list->items[$item->cliid] = $item;
+      // This list isn't complete if one item is not checked.
+      if (!$item->checked_on) {
+        $list->completed = FALSE;
+      }
+    }
+
+    // The completed value is NULL but never set to FALSE. This means the list should actually be completed.
+    if ($list->completed === NULL) {
+      $list->completed = REQUEST_TIME;
+      _checklist_complete_user_list($list->instance_id, $account);
+    }
+    if (!($list->completed) || !($skip_completed_lists)) {
+      if (($account->uid == $user->uid) && ($list->restrict_nav) && !($list->completed)) {
+        $_SESSION['checklist_required'][$list->instance_id] = 1;
+      }
+      $lists[$list->instance_id] = $list;
+    }
+  }
+  return $lists;
+}
+
+/**
+ * Internal function to wrap outputting text in check_plain or check_markup, and token_replace, if the Token module is installed
+ */
+function _checkmateplus_clean($output, $format = NULL) {
+  if (module_exists('token')) {
+    $output = token_replace($output, array('global'));
+  }
+  if ($format) {
+    return check_markup($output, $format);
+  }
+  return check_plain($output);
+}
+

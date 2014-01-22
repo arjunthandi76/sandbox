@@ -1,0 +1,1 @@
+[11-Sep-2013 12:09:35 Europe/London] PHP Fatal error:  Allowed memory size of 33554432 bytes exhausted (tried to allocate 12288 bytes) in /home/eastoxfo/public_html/sites/all/modules/contrib/ctools/includes/dropbutton.theme.inc on line 105

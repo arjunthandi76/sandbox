@@ -1,0 +1,166 @@
+<?php
+
+ /*
+ * Display output
+ */
+
+function evu_custom_menu_alter(&$menu) {
+  $menu['user/%user/hybridauth']['title'] = "Login identities";
+}
+
+
+function evu_custom_hybridauth () {
+  //dpm ("evu_custom_hybridauth");
+  //echo "<P><P>P<>==sdfds<P>P<P><P>";
+  //drupal_set_title('Funky page');
+ //return 'This is the $user value: <pre>'.var_export($user, true).'</pre>';
+}
+function evu_custom_menu() {
+  //dpm ("evu_custom_menu");
+  /*
+$items['user/%user/hybridauth'] = array(
+    'title' => t('Login identities'),
+    'page callback' => 'evu_custom_hybridauth',
+    'access callback' => TRUE,
+    'type' => MENU_LOCAL_TASK,
+);
+*/
+  /*
+  $items['user'] = array(
+    'title' => 'Programme',
+    'description' => 'Loads a program page',
+    'page arguments' => array(1),  // Passes wildcard (%) to your page callback function
+    'access callback' => TRUE, // Change if you want to control access
+    'type' => MENU_NORMAL_ITEM, // Creates a link in the menu
+    'menu_name' => 'user-menu' // Adds the link to your primary links menu, change if needed
+  );
+  
+return $items;
+*/
+
+}
+
+
+
+function __evu_custom_form_alter (&$form, $form_state, $form_id) {
+  //dpm("ALTER:".$form_id);
+  //dpm($form);
+  //dpm($form_state['view']->name);
+  //&& $form_state['view']->name == "venue_select"
+  if ($form_id == "views_exposed_form" ) {
+    //$form['#submit'][] = "evu_custom_form_submit_handler";
+    if ( $form_state['view']->name == "directory") {
+      $form['#submit'][] = "evu_custom_form_submit_handler_exposed";
+    }
+  }
+}
+
+function __evu_custom_form_submit_handler_exposed ($form, &$form_state) {
+  if (isset ($form_state['complete form']['#id'])) {
+    $form_id = $form_state['complete form']['#id'];
+    $form_id_id = $form['form_id']['#id'];
+    $submit_id = $form['submit']['#id'];
+  }
+ // dpm($form_id);
+  dpm($form_state);
+  //exposed_raw_input = submitted, arg = in url --- need to check both, exposed_raw_input must override arg tho
+  if ($form_id == "views-exposed-form-menu-posts-menu-posts") {
+    $menu_par_term = $form_state['view']->args[0];
+    $menu_par_tid = $form_state['view']->exposed_raw_input['tid'];
+    $type_par = $form_state['view']->exposed_raw_input['type'];
+    $contenttypename = strtolower(node_type_get_name($type_par));
+    $contenttypename = str_replace(" ", "-", $contenttypename);
+    //dpm($contenttypename);
+    if ($contenttypename !=="All" && $contenttypename !== "") {
+      $redirectto = $contenttypename . "/" . $menu_par_term . "";
+      $form_state['redirect'] = $redirectto;
+      drupal_goto($redirectto);
+    }
+  }
+
+  // Venues
+    if ($form_id == "views-exposed-form-venue-select-page-venues-list" && $form_id_id =="edit-views-exposed-form" && $submit_id == "edit-submit-venue-select") {
+    //if ($submit_id == "edit-submit-venue-select") {
+      
+      $searchstring_par ="";
+      $menu_par_term = $form_state['view']->args[0];
+      $expo_filter_menu = $form_state['view']->exposed_raw_input['menu'];
+      $searchstring_par = $form_state['view']->exposed_raw_input['keys'];
+      //$type_par = str_replace(" ", "-", $type_par);
+      //$contenttypename = strtolower(node_type_get_name($type_par));
+      //$contenttypename = str_replace(" ", "-", $contenttypename);
+  
+      //dpm($menu_par_term);
+     // dpm($expo_filter_menu);
+     // dpm($searchstring_par);
+      $redirectto = "venues/" . $expo_filter_menu . "/" .$searchstring_par;
+      $form_state['redirect'] = $redirectto;
+      //drupal_goto($redirectto);
+    }
+  
+    if ($form_id == "views-exposed-form-directory-directory-page") {
+      // When a form is submitted using the exposed filters:
+      // if    : a sub category (business/org term) exists in url and the exposed filter equivalent is not empty
+      // || if : a sub category (business/org term) exists in url and menu category in both are different
+      // || if : 
+
+
+      $searchstring_par ="";
+      $url_par_menu = $form_state['view']->args[0];
+      $url_par_bizcat1 = $form_state['view']->args[1];
+      $url_par_bizcat2 = $form_state['view']->args[2];
+
+      $filter_par_menu = $form_state['view']->exposed_raw_input['menu_tid'];
+      $filter_par_bizcat1 = $form_state['view']->exposed_raw_input['bizcat'];
+      $filter_par_bizcat2 = $form_state['view']->exposed_raw_input['menu_tid'];
+      $filter_par_search_terms = $form_state['view']->exposed_raw_input['search_terms '];
+      
+      $expo_filter_menu = $form_state['view']->exposed_raw_input['menu'];
+      $searchstring_par = $form_state['view']->exposed_raw_input['keys'];
+
+      dpm($filter_par_menu);
+ // dpm(taxonomy_term_load($filter_par_bizcat1));
+ // dpm(drupal_lookup_path('alias', 'taxonomy/term/'.$filter_par_bizcat1));
+      
+  if ($filter_par_menu !== "All") {
+    $filter_par_menu_term = taxonomy_term_load($filter_par_menu) ;
+    dpm($filter_par_menu_term);
+    $filter_par_menu_term_path = strtolower($filter_par_menu_term->name);
+  }else{
+    $filter_par_menu_term_path = "all";
+  }
+  
+  $bizcat_path = construct_taxonomy_path($filter_par_bizcat1);
+  dpm($filter_par_menu);
+  
+$bizcat_path = "directory/". $filter_par_menu_term_path . "/" . $bizcat_path . "/" . $filter_par_search_terms;
+dpm($bizcat_path);
+  //dpm(taxonomy_get_term($filter_par_bizcat1));
+      //dpm($menu_par_term);
+      //dpm($expo_filter_menu);
+      //dpm($searchstring_par);
+      $redirectto = "venues/" . $expo_filter_menu . "/" .$searchstring_par;
+      //$form_state['redirect'] = $redirectto;
+      //drupal_goto($redirectto);
+      
+    }
+
+}
+
+
+function construct_taxonomy_path ($tid) {
+  
+  $parent_parents= array();
+  $tax_path = "";
+  $parent_parents = taxonomy_get_parents_all($tid);
+  $parent_parents = array_reverse($parent_parents);  
+  foreach ($parent_parents as $value) {
+    $machine_readable = strtolower($value->name);
+    $machine_readable = preg_replace('@[^a-z0-9_]+@','-',$machine_readable);
+    $tax_path .= $machine_readable . "/";
+  }
+  $tax_path = rtrim($tax_path, "/");
+  return $tax_path;
+
+}
+?>

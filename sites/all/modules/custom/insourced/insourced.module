@@ -1,0 +1,93 @@
+<?php
+
+
+
+
+
+/* 
+ * the menu hook - adds the path for this module including the 
+ * ajax autocomplete paths. 
+ * 
+ */
+
+function insourced_menu(){
+
+
+  $items['admin/insourced'] = array(
+    'title' => 'Insourced',
+    'page callback' => 'drupal_goto',
+    'access arguments' => array('administer nodes'),
+    'page arguments' => array('admin/content/checkmate-item'),
+    'weight' => -12,
+    'type' => MENU_LOCAL_TASK
+  );
+  
+  $items['admin/insourced/checklists'] = array(
+    'title' => 'Checklists',
+    'page callback' => 'drupal_goto',
+    'access arguments' => array('administer nodes'),
+    'page arguments' => array('admin/content'),
+    'type' => MENU_LOCAL_TASK
+  );  
+  /*
+  $items['admin/insourced/checklists/add'] = array(
+    'title' => 'Checklists',
+    'page callback' => 'drupal_goto',
+    'access arguments' => array('administer nodes'),
+    'page arguments' => array('node/add'),
+    'type' => MENU_LOCAL_TASK
+  );    
+  $items['admin/insourced/checklists/view'] = array(
+    'title' => 'Checklists',
+    'page callback' => 'drupal_goto',
+    'access arguments' => array('administer nodes'),
+    'page arguments' => array('node/add'),
+    'type' => MENU_LOCAL_TASK
+  );
+  */
+ 
+  $items['admin/insourced/checklist_items'] = array(
+    'title' => 'Checklist items',
+    'page callback' => 'drupal_goto',
+    'access arguments' => array('administer nodes'),
+    'page arguments' => array('admin/content/checkmate-item'),
+    'type' => MENU_LOCAL_TASK
+  );
+  $items['admin/insourced/checklist_items/add'] = array(
+    'title' => 'Add',
+    'page callback' => 'drupal_goto',
+    'access arguments' => array('administer nodes'),
+    'page arguments' => array('admin/content/checkmate-item/add'),
+    'type' => MENU_LOCAL_TASK
+  );  
+  $items['admin/insourced/checklist_items/view'] = array(
+    'title' => 'View',
+    'page callback' => 'drupal_goto',
+    'access arguments' => array('administer nodes'),
+    'page arguments' => array('admin/content/checkmate-item'),
+    'type' => MENU_LOCAL_TASK
+  );    
+  $items['admin/insourced/tutorials'] = array(
+    'title' => 'Tutorials',
+    'page callback' => 'drupal_goto',
+    'access arguments' => array('administer nodes'),
+    'page arguments' => array('admin/content/'),
+    'type' => MENU_LOCAL_TASK
+  );
+  $items['admin/insourced/tutorials/add'] = array(
+    'title' => 'Add',
+    'page callback' => 'drupal_goto',
+    'access arguments' => array('administer nodes'),
+    'page arguments' => array('node/add/how-to'),
+    'type' => MENU_LOCAL_TASK
+  );  
+  $items['admin/insourced/tutorials/view'] = array(
+    'title' => 'View',
+    'page callback' => 'drupal_goto',
+    'access arguments' => array('administer nodes'),
+    'page arguments' => array('admin/content/'),
+    'type' => MENU_LOCAL_TASK
+  );    
+ return $items;
+}
+

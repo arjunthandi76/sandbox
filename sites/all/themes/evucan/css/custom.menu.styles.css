@@ -1,0 +1,148 @@
+/* MENU */
+
+.front #primary-menu-bar ul.primary-menu .nav li,
+.front #primary-menu-bar ul.primary-menu .nav ul.menu li {
+  display: inline;
+  float: left;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/*
+#primary-menu-bar {background-color:lightgrey;margin:0px 10px 10px 10px;;padding:3px 5px 2px 5px; border: 1px solid grey; font-size:145%; font-weight:bold; letter-spacing:1px}
+#primary-menu-bar a {color:#333; text-decoration: none; text-transform:uppercase;}
+#primary-menu-bar a:hover {color:orange; text-decoration: none; text-transform:uppercase;}
+*/
+#primary-menu-bar {float:right;}
+
+.tb-megamenu {
+  background-color: #333;
+  background-image: -moz-linear-gradient(top,#333,#444);
+  background-image: -webkit-gradient(linear,0 0,0 100%,from(#333),to(#444));
+  background-image: -webkit-linear-gradient(top,#333,#444);
+  background-image: -o-linear-gradient(top,#333,#444);
+  background-image: linear-gradient(to bottom,lightgrey,lightgrey);
+  background-repeat: repeat-x;
+  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff333333', endColorstr='#ff444444', GradientType=0); 
+  color: #aaa;
+}
+
+.tb-megamenu .nav > li > a {
+  /*background: url(../../images/line.png) no-repeat 100% 0;*/  /* Right border */
+  padding: 5px 10px;
+  text-decoration: none;
+  text-transform: uppercase;
+  color:#333;  
+}
+.tb-megamenu .nav > .active > a,
+.tb-megamenu .nav > .active > a:hover,
+.tb-megamenu .nav > .active > a:focus {
+  background-color: inherit;
+  color:#000;
+}
+
+.tb-megamenu .nav-collapse .nav > li.active > a:hover, 
+.tb-megamenu .nav-collapse .nav > li.active > a:focus {
+  background-color: #333;
+  color: darkorange;
+}
+.tb-megamenu .nav li.dropdown.active > .dropdown-toggle {
+  background-color: inherit;
+  color: darkorange;
+}
+.tb-megamenu .nav > li.dropdown.open.active > a:hover,
+.tb-megamenu .nav > li.dropdown.open.active > a:focus {
+  background-color: #333;
+  color: darkorange;
+}
+.tb-megamenu .nav > li > a:focus,
+.tb-megamenu .nav > li > a:hover
+{
+  background-color: #333;
+  color: darkorange;
+}
+.tb-megamenu .nav li.dropdown.open > .dropdown-toggle, /* top level with sub menu */
+.tb-megamenu .nav li.dropdown.open.active > .dropdown-toggle {
+  background-color: #333;;
+  color: darkorange;
+}
+
+.tb-megamenu .nav > .active > a, /* top level active */
+.tb-megamenu .nav > .active > a:hover,
+.tb-megamenu .nav > .active > a:focus {
+  background-color: inherit;
+  color: darkorange;
+}
+
+.tb-megamenu-column-inner {background-color: #333;} /* 2nd level bkg */
+.tb-megamenu .dropdown-menu { /* 2nd level */
+  background-color: #fff;
+  border: none;
+}
+
+.tb-megamenu .mega-nav > li, /* 2nd level - */
+.tb-megamenu .dropdown-menu .mega-nav > li {
+  background-color: #333;
+}
+.tb-megamenu .mega-nav > li a,
+.tb-megamenu .dropdown-menu .mega-nav > li a {
+  white-space: normal;
+  color: #fff;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
+.tb-megamenu .dropdown-menu .mega-nav > li a:hover {
+	  color: darkorange;
+  }
+  
+  
+.tb-megamenu .mega-nav > li a:hover,
+.tb-megamenu .dropdown-menu .mega-nav > li a:focus {
+  color: #fff;
+}
+
+.tb-megamenu .nav li.dropdown.active > a.dropdown-toggle {
+  background-color: inherit;
+  color: darkorange;
+}
+
+
+
+.tb-megamenu .mega-nav > li.active a {
+	color: darkorange;
+}
+.tb-megamenu .dropdown-menu .active > a,
+.tb-megamenu .dropdown-menu .active > a:hover {
+	text-decoration: none;
+	outline: 0;
+	background-color: transparent;
+	background-image: none;
+	color:darkorange
+
+}
+
+.tb-megamenu .nav li.dropdown.open > .dropdown-toggle .caret,
+.tb-megamenu .nav li.dropdown.active > .dropdown-toggle .caret,
+.tb-megamenu .nav li.dropdown.open.active > .dropdown-toggle .caret {
+  border-top-color: #333;
+  border-bottom-color: #eee;
+}
+
+
+/* menu-2 = my account, menu-1539  = login, menu-14 = logout, menu-1540 = register, menu-1545 = myposts */
+.logged-in .menu-1545  {}
+body.not-logged-in #primary-menu-bar li.menu-1545,
+body.logged-in #primary-menu-bar li.menu-1539
+  {display:none;}
+  
+body.not-logged-in #secondary-menu-bar li.menu-1545,
+body.logged-in #secondary-menu-bar li.menu-1539
+  {display:none;}  
+  
+  
+.view-mode-subdisplay .field-name-field-shr-tax-menu-category,
+.view-mode-subdisplay .field_event_category,
+.view-mode-subdisplay .field-name-node-link
+{float:left;}

@@ -1,0 +1,14 @@
+ 
+#checklist-edit-item-form .form-item-general-title,
+#checklist-edit-item-form .form-item-general-description-value,
+#checklist-edit-item-form #edit-general-description-format,
+#checklist-edit-item-form #edit-general-checklist-item-tokens
+{
+	display:none; 
+} 
+
+#checklist-edit-instance-form .form-item-group-complete,
+{
+	display:none; 
+} 
+ 	 

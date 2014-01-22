@@ -1,0 +1,5 @@
+name = Checkmate Plus
+description = "Support functions for Checkmate module"
+core = 7.x
+files[] = checkmateplus.module
+files[] = includes/checkmateplus.pages.inc

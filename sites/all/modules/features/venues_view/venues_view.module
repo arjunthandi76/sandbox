@@ -1,0 +1,7 @@
+<?php
+/**
+ * @file
+ * Code for the venues view feature.
+ */
+
+include_once('venues_view.features.inc');

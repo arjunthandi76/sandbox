@@ -1,0 +1,5 @@
+name = Insourced
+description = "Support functions for Insourced application"
+core = 7.x
+files[] = insourced.module
+files[] = includes/checklist.pages.inc

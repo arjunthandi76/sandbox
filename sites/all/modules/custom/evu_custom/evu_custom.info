@@ -1,0 +1,6 @@
+name = Custom module by Evucan
+description = Custom functions required for this website
+package = Evucan modules
+core = 7.x
+
+files[] = evu_custom.module

@@ -1,0 +1,10 @@
+// Filename = evu_seven.info
+
+name = Evu seven
+description = Sub theme of admin theme : seven
+core = 7.x
+base theme = seven
+
+// Override CSS
+stylesheets[all][] = style.css
+stylesheets[all][] = custom_admin_styles.css
